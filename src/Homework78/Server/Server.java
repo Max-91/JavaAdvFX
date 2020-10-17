@@ -53,9 +53,26 @@ public class Server {
 
     // Процедура отправки всем сообщения
     public void broadcastMsg(ClientHandler sender, String msg) {
-        String message = String.format("[ %s ]: %s", sender.getNickname(), msg);
-        for (ClientHandler c : clients) {
-            c.sendMsg(message);
+        if (msg.startsWith("/w ")) { // Именная отправка
+            String[] wordMsg = msg.split("\\s");
+            if (wordMsg.length >= 3) {
+                String nicSender = sender.getNickname();
+                String nicReceiver = wordMsg[1];
+                String message = String.format("[ %s->%s ]: ", nicSender, nicReceiver);
+                for (int i = 2; i < wordMsg.length; i++) {
+                    message += wordMsg[i] + " ";
+                }
+                for (ClientHandler c : clients) {
+                    if (nicReceiver.equals(c.getNickname()) || nicSender.equals(c.getNickname())) {
+                        c.sendMsg(message);
+                    }
+                }
+            }
+        } else { // Отправка сообщения всем
+            String message = String.format("[ %s ]: %s", sender.getNickname(), msg);
+            for (ClientHandler c : clients) {
+                c.sendMsg(message);
+            }
         }
     }
 
