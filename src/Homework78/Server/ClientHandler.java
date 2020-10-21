@@ -8,6 +8,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 public class ClientHandler {
     DataInputStream in;
@@ -28,6 +29,7 @@ public class ClientHandler {
 
             new Thread(() -> {
                 try {
+                    socket.setSoTimeout(5000); // Таймаут на отключение клиента, если клиент не зарегистрирован
                     //цикл аутентификации
                     while (true) {
                         String str = in.readUTF();
@@ -49,6 +51,7 @@ public class ClientHandler {
                             }
                         }
                     }
+                    socket.setSoTimeout(0); // Отключение таймаута, так как клиент залогинился
                     //цикл работы
                     while (true) {
                         String str = in.readUTF();
@@ -58,6 +61,10 @@ public class ClientHandler {
                         }
                         server.broadcastMsg(this, str);
                     }
+                } catch (SocketTimeoutException e) {
+                    System.out.println("Отключение клиента по времени бездействия, сокет: " + socket.getRemoteSocketAddress());
+                    sendMsg("Время соединения превышено, вы отключены");
+                    sendMsg("/end");
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {

@@ -12,6 +12,7 @@ import javafx.stage.Stage;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URL;
@@ -55,8 +56,9 @@ public class Controller implements Initializable {
             setTitle("Балабол");
         } else {
             setTitle(String.format("[ %s ] - Балабол", nickname));
+            textArea.clear();
         }
-        textArea.clear();
+
     }
 
     // Открытие окна
@@ -80,12 +82,15 @@ public class Controller implements Initializable {
                     //цикл аутентификации
                     while (true) {
                         String str = in.readUTF(); // !..! Ожидание пакета от сервера
-                        if (str.startsWith("/authok ")) {
-                            nickname = str.split("\\s")[1];
-                            setAuthenticated(true);
-                            break;
+                        if (str.startsWith("/")) {
+                            if (str.startsWith("/authok ")) {
+                                nickname = str.split("\\s")[1];
+                                setAuthenticated(true);
+                                break;
+                            }
+                        } else {
+                            textArea.appendText(str + "\n");
                         }
-                        textArea.appendText(str + "\n");
                     }
                     //цикл работы
                     while (true) {
@@ -95,6 +100,8 @@ public class Controller implements Initializable {
                         }
                         textArea.appendText(str + "\n");
                     }
+                } catch (EOFException e) {
+                    textArea.appendText("Соединение с сервером прервано");
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
